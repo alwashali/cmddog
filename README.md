@@ -1,2 +1,2 @@
 # cmdlog
-Log command output   
+Periodically execute commands and log the output difference to a file.  
