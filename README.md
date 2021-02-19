@@ -1,0 +1,2 @@
+# cmdlog
+Log command output   
