@@ -1,7 +1,6 @@
 package commandwatch
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os/exec"
@@ -10,38 +9,40 @@ import (
 	"time"
 )
 
-// OutputMonitor options
-type OutputMonitor struct {
-	command      string
-	args         []string
-	output       []string
-	regexfilters []string
-	lastchanged  time.Time
+// Cmdlog options
+type Cmdlog struct {
+	command        string
+	args           []string
+	results        []string
+	matchRegex     []string
+	filterRegex    []string
+	lastPrintIndex int64
 }
 
 // New creates new object
-func New(cmd string, args []string) *OutputMonitor {
-	return &OutputMonitor{
-		command: cmd,
-		args:    args,
+func New(cmd string, args []string) *Cmdlog {
+	return &Cmdlog{
+		command:        cmd,
+		args:           args,
+		lastPrintIndex: -1,
 	}
 }
 
 // Insert to unique output values
-func (e *OutputMonitor) insert(line string) {
+func (e *Cmdlog) insert(line string) {
 	if line != "" {
-		e.output = append(e.output, line)
+		e.results = append(e.results, line)
 	}
 }
 
 // Filter output using regex
-func (e *OutputMonitor) filter(output string) string {
+func (e *Cmdlog) filter(output string) string {
 	// loop through all filters and clean the string matching the regex filter
-	if len(e.regexfilters) > 0 {
+	if len(e.filterRegex) > 0 {
 		var str []string
 		str = append(str, output)
 		// iterate str and each time string is cleaned using regex put it in a new place inside the slice
-		for i, filter := range e.regexfilters {
+		for i, filter := range e.filterRegex {
 			re := regexp.MustCompile(filter)
 			str = append(str, re.ReplaceAllString(str[i], ""))
 
@@ -52,30 +53,49 @@ func (e *OutputMonitor) filter(output string) string {
 	return output
 }
 
-// SetFilter for cleaning the output before store
-// Use with caution -> your regex should match only unwanted match in the output
-func (e *OutputMonitor) SetFilter(filter string) {
-	e.regexfilters = append(e.regexfilters, filter)
+func (e *Cmdlog) match(output string) string {
+	// loop through all filters and clean the string matching the regex filter
+	if len(e.matchRegex) > 0 {
+		var str []string
+		str = append(str, output)
+		// iterate str and each time string is cleaned using regex put it in a new place inside the slice
+		for i, filter := range e.matchRegex {
+			re := regexp.MustCompile(filter)
+			str = append(str, re.FindString(str[i]))
+		}
+		i := len(str)
+		return str[i-1]
+	}
+	return output
 }
 
-//check if there is any new lines in the output
-func (e *OutputMonitor) check(output string) {
-	for _, item := range e.output {
-		scanner := bufio.NewScanner(strings.NewReader(output))
-		for scanner.Scan() {
-			if item != scanner.Text() {
-				e.insert(scanner.Text())
-				e.lastchanged = time.Now()
+// SetFilter for cleaning the output before store
+// Use with caution -> your regex should match only unwanted match in the output
+func (e *Cmdlog) SetFilter(filter string) {
+	e.filterRegex = append(e.filterRegex, filter)
+}
 
+//check if there is any new lines(value) in the output
+func (e *Cmdlog) check(output string) {
+
+	for _, line := range strings.Split(strings.TrimSuffix(output, "\n"), "\n") {
+		found := false
+		for _, item := range e.results {
+			if line == item {
+				found = true
 			}
+		}
+		if found == false {
+			e.insert(line)
 		}
 
 	}
+
 }
 
 // Run continuesly execute the command and write the new output values to output buffer
-func (e *OutputMonitor) Run(sleepTime time.Duration) {
-
+func (e *Cmdlog) Run(sleepTime time.Duration) {
+	e.results = append(e.results, " ")
 	for {
 		cmd := exec.Command(e.command, e.args...)
 		// run the command and output
@@ -84,7 +104,9 @@ func (e *OutputMonitor) Run(sleepTime time.Duration) {
 			log.Fatalf("Output failed with %s\n", err)
 		}
 		out := string(output)
-		out = e.filter(out)
+		if e.filterRegex != nil {
+			out = e.filter(out)
+		}
 		e.check(out)
 		// The sleep value depends on how frequent your command outputs the results
 		time.Sleep(sleepTime)
@@ -92,19 +114,17 @@ func (e *OutputMonitor) Run(sleepTime time.Duration) {
 
 }
 
-// Output returns the output slice
-func (e *OutputMonitor) Output() []string {
-	return e.output
+// Results returns the results slice
+func (e *Cmdlog) Results() []string {
+	return e.results
 }
 
-// PrintOutput returns the output written
-func (e *OutputMonitor) PrintOutput() {
-	for line := range e.output {
-		fmt.Println(line)
+// PrintNew prints the new added values
+func (e *Cmdlog) PrintNew() {
+	for i, line := range e.results {
+		if i > int(e.lastPrintIndex) {
+			fmt.Println(line)
+			e.lastPrintIndex = int64(i)
+		}
 	}
-}
-
-// LastChanged returns last time a new value is added to output slice
-func (e *OutputMonitor) LastChanged() *time.Time {
-	return &e.lastchanged
 }
