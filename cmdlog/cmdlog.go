@@ -38,41 +38,52 @@ func (e *Cmdlog) insert(line string) {
 // Filter output using regex
 func (e *Cmdlog) filter(output string) string {
 	// loop through all filters and clean the string matching the regex filter
-	if len(e.filterRegex) > 0 {
-		var str []string
-		str = append(str, output)
-		// iterate str and each time string is cleaned using regex put it in a new place inside the slice
-		for i, filter := range e.filterRegex {
-			re := regexp.MustCompile(filter)
-			str = append(str, re.ReplaceAllString(str[i], ""))
 
-		}
-		i := len(str)
-		return str[i-1]
+	var str []string
+	str = append(str, output)
+	// iterate str and each time string is cleaned using regex put it in a new place inside the slice
+	for i, filter := range e.filterRegex {
+		re := regexp.MustCompile(filter)
+		str = append(str, re.ReplaceAllString(str[i], ""))
+
 	}
-	return output
+	i := len(str)
+	return str[i-1]
+
 }
 
 func (e *Cmdlog) match(output string) string {
 	// loop through all filters and clean the string matching the regex filter
-	if len(e.matchRegex) > 0 {
-		var str []string
-		str = append(str, output)
-		// iterate str and each time string is cleaned using regex put it in a new place inside the slice
-		for i, filter := range e.matchRegex {
-			re := regexp.MustCompile(filter)
-			str = append(str, re.FindString(str[i]))
+
+	var str []string
+	// iterate str and each time string is cleaned using regex put it in a new place inside the slice
+	fmt.Println(e.matchRegex)
+	for _, mfilter := range e.matchRegex {
+		re := regexp.MustCompile(mfilter)
+		for _, m := range re.FindAllString(output, -1) {
+			str = append(str, m)
 		}
-		i := len(str)
-		return str[i-1]
+
 	}
-	return output
+	rstring := strings.Builder{}
+	for _, s := range str {
+		rstring.WriteString(s)
+		rstring.WriteString("\n")
+	}
+
+	return rstring.String()
+
 }
 
 // SetFilter for cleaning the output before store
-// Use with caution -> your regex should match only unwanted match in the output
+// Use with caution -> your regex should match only unwanted text in the output
 func (e *Cmdlog) SetFilter(filter string) {
 	e.filterRegex = append(e.filterRegex, filter)
+}
+
+// SetMatch set regex pattern
+func (e *Cmdlog) SetMatch(match string) {
+	e.matchRegex = append(e.matchRegex, match)
 }
 
 //check if there is any new lines(value) in the output
@@ -98,6 +109,7 @@ func (e *Cmdlog) Run(sleepTime time.Duration) {
 	e.results = append(e.results, " ")
 	for {
 		cmd := exec.Command(e.command, e.args...)
+
 		// run the command and output
 		output, err := cmd.Output()
 		if err != nil {
@@ -106,6 +118,9 @@ func (e *Cmdlog) Run(sleepTime time.Duration) {
 		out := string(output)
 		if e.filterRegex != nil {
 			out = e.filter(out)
+		}
+		if e.matchRegex != nil {
+			out = e.match(out)
 		}
 		e.check(out)
 		// The sleep value depends on how frequent your command outputs the results
