@@ -9,18 +9,16 @@ import (
 
 // Runner is a client for running the enumeration process.
 type Runner struct {
-	options    *scanOptions
-	om         *cmdlog.Cmdlog
-	lastupdate time.Time
+	options *scanOptions
+	om      *cmdlog.Cmdlog
 }
 
 // New creates a new runner
 func New(cmdOptions *scanOptions) (*Runner, error) {
 	args := []string{}
 	runner := &Runner{
-		options:    cmdOptions,
-		om:         cmdlog.New(cmdOptions.command, args),
-		lastupdate: time.Now(),
+		options: cmdOptions,
+		om:      cmdlog.New(cmdOptions.command, args),
 	}
 	if cmdOptions.filter != "" {
 		runner.om.SetFilter(cmdOptions.filter)
