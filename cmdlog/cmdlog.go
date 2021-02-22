@@ -11,12 +11,12 @@ import (
 
 // Cmdlog options
 type Cmdlog struct {
-	command        string
-	args           []string
-	results        []string
-	matchRegex     []string
-	filterRegex    []string
-	lastPrintIndex int64
+	command          string
+	args             []string
+	results          []string
+	grepRegex        []string
+	reverseGrepRegex []string
+	lastPrintIndex   int64
 }
 
 // New creates new object
@@ -42,7 +42,7 @@ func (e *Cmdlog) filter(output string) string {
 	var str []string
 	str = append(str, output)
 	// iterate str and each time string is cleaned using regex put it in a new place inside the slice
-	for i, filter := range e.filterRegex {
+	for i, filter := range e.reverseGrepRegex {
 		re := regexp.MustCompile(filter)
 		str = append(str, re.ReplaceAllString(str[i], ""))
 
@@ -57,8 +57,8 @@ func (e *Cmdlog) match(output string) string {
 
 	var str []string
 	// iterate str and each time string is cleaned using regex put it in a new place inside the slice
-	fmt.Println(e.matchRegex)
-	for _, mfilter := range e.matchRegex {
+	fmt.Println(e.grepRegex)
+	for _, mfilter := range e.grepRegex {
 		re := regexp.MustCompile(mfilter)
 		for _, m := range re.FindAllString(output, -1) {
 			str = append(str, m)
@@ -75,15 +75,15 @@ func (e *Cmdlog) match(output string) string {
 
 }
 
-// SetFilter for cleaning the output before store
+// SetReverseGrepRegex for cleaning the output before store
 // Use with caution -> your regex should match only unwanted text in the output
-func (e *Cmdlog) SetFilter(filter string) {
-	e.filterRegex = append(e.filterRegex, filter)
+func (e *Cmdlog) SetReverseGrepRegex(filter string) {
+	e.reverseGrepRegex = append(e.reverseGrepRegex, filter)
 }
 
-// SetMatch set regex pattern
-func (e *Cmdlog) SetMatch(match string) {
-	e.matchRegex = append(e.matchRegex, match)
+// SetGrepRegex set regex pattern
+func (e *Cmdlog) SetGrepRegex(match string) {
+	e.grepRegex = append(e.grepRegex, match)
 }
 
 //check if there is any new lines(value) in the output
@@ -116,10 +116,10 @@ func (e *Cmdlog) Run(sleepTime time.Duration) {
 			log.Fatalf("Output failed with %s\n", err)
 		}
 		out := string(output)
-		if e.filterRegex != nil {
+		if e.reverseGrepRegex != nil {
 			out = e.filter(out)
 		}
-		if e.matchRegex != nil {
+		if e.grepRegex != nil {
 			out = e.match(out)
 		}
 		e.check(out)

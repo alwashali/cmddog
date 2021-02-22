@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	runner "github.com/alwashali/cmdlog/internal"
+	runner "github.com/alwashali/cmdlog/internal/runner"
 )
 
 func main() {
