@@ -13,11 +13,11 @@ import (
 // ScanOptions struct for cmd tool options
 type ScanOptions struct {
 	Command          string   `json:"command"`
-	ReverseGrepRegex []string `json:"ReverseGrepRegex"`
-	GrepRegex        []string `json:"GrepRegex"`
+	ReverseGrepRegex []string `json:"reversegrep"`
+	GrepRegex        []string `json:"grep"`
 	ConfigFile       string
 	OutputFile       string `json:"output"`
-	silent           bool
+	Silent           bool
 	Interval         time.Duration
 }
 
@@ -26,12 +26,12 @@ func ParseOptions() *ScanOptions {
 
 	options := new(ScanOptions)
 
-	flag.StringVar(&options.OutputFile, "o", "", "Output File Name")
+	flag.StringVar(&options.OutputFile, "o", "", "Output File Name, Default: Stdout")
 	flag.StringVar(&options.ConfigFile, "c", "", "Config File Name")
-	filter := flag.String("f", "", "Regex Filter, for more than one regex use the config file")
-	match := flag.String("m", "", "Matching Regex, for more than one regex use the config file")
-	flag.BoolVar(&options.silent, "s", false, "Silent mode")
-	flag.DurationVar(&options.Interval, "i", time.Second*5, "Execute time interval, e.g. 3s")
+	filter := flag.String("g", "", "grep filter, for more than one regex use the config file")
+	match := flag.String("r", "", "reverse grep filter, for more than one regex use the config file")
+	flag.BoolVar(&options.Silent, "s", false, "Silent mode")
+	flag.DurationVar(&options.Interval, "i", time.Second*3, "Execute time interval, e.g. 5s")
 
 	flag.Parse()
 

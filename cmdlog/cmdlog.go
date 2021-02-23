@@ -16,27 +16,44 @@ type Cmdlog struct {
 	results          []string
 	grepRegex        []string
 	reverseGrepRegex []string
-	lastPrintIndex   int64
+	lastPrintIndex   int
 }
 
 // New creates new object
 func New(cmd string, args []string) *Cmdlog {
 	return &Cmdlog{
-		command:        cmd,
-		args:           args,
-		lastPrintIndex: -1,
+		command: cmd,
+		args:    args,
 	}
 }
 
 // Insert to unique output values
-func (e *Cmdlog) insert(line string) {
-	if line != "" {
-		e.results = append(e.results, line)
+func (e *Cmdlog) insertNew(output string) {
+
+	for _, line := range strings.Split(strings.TrimSuffix(output, "\n"), "\n") {
+		found := false
+
+		// range keyword doesn't work on empty slice, first item appended directly
+		if len(e.results) == 0 {
+			e.results = append(e.results, line)
+			continue
+		}
+		for _, item := range e.results {
+			if line == item {
+				found = true
+			}
+		}
+		if found == false {
+			e.results = append(e.results, line)
+
+		}
+
 	}
+
 }
 
 // Filter output using regex
-func (e *Cmdlog) filter(output string) string {
+func (e *Cmdlog) reverseGrep(output string) string {
 	// loop through all filters and clean the string matching the regex filter
 
 	var str []string
@@ -52,14 +69,14 @@ func (e *Cmdlog) filter(output string) string {
 
 }
 
-func (e *Cmdlog) match(output string) string {
+func (e *Cmdlog) grep(output string) string {
 	// loop through all filters and clean the string matching the regex filter
 
 	var str []string
 	// iterate str and each time string is cleaned using regex put it in a new place inside the slice
 	fmt.Println(e.grepRegex)
-	for _, mfilter := range e.grepRegex {
-		re := regexp.MustCompile(mfilter)
+	for _, filter := range e.grepRegex {
+		re := regexp.MustCompile(filter)
 		for _, m := range re.FindAllString(output, -1) {
 			str = append(str, m)
 		}
@@ -86,27 +103,9 @@ func (e *Cmdlog) SetGrepRegex(match string) {
 	e.grepRegex = append(e.grepRegex, match)
 }
 
-//check if there is any new lines(value) in the output
-func (e *Cmdlog) check(output string) {
-
-	for _, line := range strings.Split(strings.TrimSuffix(output, "\n"), "\n") {
-		found := false
-		for _, item := range e.results {
-			if line == item {
-				found = true
-			}
-		}
-		if found == false {
-			e.insert(line)
-		}
-
-	}
-
-}
-
 // Run continuesly execute the command and write the new output values to output buffer
 func (e *Cmdlog) Run(sleepTime time.Duration) {
-	e.results = append(e.results, " ")
+
 	for {
 		cmd := exec.Command(e.command, e.args...)
 
@@ -116,30 +115,32 @@ func (e *Cmdlog) Run(sleepTime time.Duration) {
 			log.Fatalf("Output failed with %s\n", err)
 		}
 		out := string(output)
+
 		if e.reverseGrepRegex != nil {
-			out = e.filter(out)
+			out = e.reverseGrep(out)
 		}
+
 		if e.grepRegex != nil {
-			out = e.match(out)
+			out = e.grep(out)
 		}
-		e.check(out)
+
+		e.insertNew(out)
+
 		// The sleep value depends on how frequent your command outputs the results
 		time.Sleep(sleepTime)
 	}
 
 }
 
-// Results returns the results slice
-func (e *Cmdlog) Results() []string {
+// Results returns the results slice from the specified index, pass 0 for returning entire slice
+func (e *Cmdlog) Results(i int) []string {
+	if i >= 0 && len(e.results) > 0 && i < len(e.results) {
+		return e.results[i:]
+	}
 	return e.results
 }
 
-// PrintNew prints the new added values
-func (e *Cmdlog) PrintNew() {
-	for i, line := range e.results {
-		if i > int(e.lastPrintIndex) {
-			fmt.Println(line)
-			e.lastPrintIndex = int64(i)
-		}
-	}
+// ResultsSize returns number of elements in results slice
+func (e *Cmdlog) ResultsSize() int {
+	return len(e.results)
 }
