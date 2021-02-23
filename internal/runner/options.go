@@ -28,8 +28,8 @@ func ParseOptions() *ScanOptions {
 
 	flag.StringVar(&options.OutputFile, "o", "", "Output File Name, Default: Stdout")
 	flag.StringVar(&options.ConfigFile, "c", "", "Config File Name")
-	filter := flag.String("g", "", "grep filter, for more than one regex use the config file")
-	match := flag.String("r", "", "reverse grep filter, for more than one regex use the config file")
+	match := flag.String("g", "", "grep filter, skip everything except regex matches. For more than one regex use the config file")
+	filter := flag.String("r", "", "reverse grep filter, print everything execpt regex matches. For more than one regex filter use the config file")
 	flag.BoolVar(&options.Silent, "s", false, "Silent mode")
 	flag.DurationVar(&options.Interval, "i", time.Second*3, "Execute time interval, e.g. 5s")
 

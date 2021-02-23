@@ -1,7 +1,7 @@
 package commandwatch
 
 import (
-	"fmt"
+	"bufio"
 	"log"
 	"os/exec"
 	"regexp"
@@ -57,11 +57,20 @@ func (e *Cmdlog) reverseGrep(output string) string {
 	// loop through all filters and clean the string matching the regex filter
 
 	var str []string
+
 	str = append(str, output)
 	// iterate str and each time string is cleaned using regex put it in a new place inside the slice
 	for i, filter := range e.reverseGrepRegex {
 		re := regexp.MustCompile(filter)
-		str = append(str, re.ReplaceAllString(str[i], ""))
+		outstr := re.ReplaceAllString(str[i], "")
+		scanner := bufio.NewScanner(strings.NewReader(outstr))
+		strBuilder := strings.Builder{}
+		for scanner.Scan() {
+			if scanner.Text() != "" {
+				strBuilder.WriteString(scanner.Text() + "\n")
+			}
+		}
+		str = append(str, strBuilder.String())
 
 	}
 	i := len(str)
@@ -74,7 +83,6 @@ func (e *Cmdlog) grep(output string) string {
 
 	var str []string
 	// iterate str and each time string is cleaned using regex put it in a new place inside the slice
-	fmt.Println(e.grepRegex)
 	for _, filter := range e.grepRegex {
 		re := regexp.MustCompile(filter)
 		for _, m := range re.FindAllString(output, -1) {
