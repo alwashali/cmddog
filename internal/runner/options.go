@@ -1,18 +1,21 @@
 package runner
 
 import (
+	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
 // ScanOptions struct for cmd tool options
 type ScanOptions struct {
 	Command          string   `json:"command"`
+	Args             []string `json:"args"`
 	ReverseGrepRegex []string `json:"reversegrep"`
 	GrepRegex        []string `json:"grep"`
 	ConfigFile       string
@@ -39,6 +42,16 @@ func ParseOptions() *ScanOptions {
 	options.GrepRegex = append(options.GrepRegex, *match)
 	options.Command = flag.Arg(0)
 
+	if len(flag.Args()) > 1 {
+		for i, v := range flag.Args() {
+			if i == 0 { // skip flag.Args(0) -> name of the command itself
+				continue
+			}
+			options.Args = append(options.Args, v) // append all supplied command line args
+		}
+
+	}
+
 	if flag.Arg(0) == "" && options.ConfigFile == "" {
 		fmt.Printf("Command not found \n\nTry:\n%s Options Command\n\n", os.Args[0])
 		flag.Usage()
@@ -60,10 +73,19 @@ func parseConfig(options ScanOptions, filename string) *ScanOptions {
 
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 
-	err = json.Unmarshal(byteValue, &options)
+	strBuilder := strings.Builder{}
+
+	scanner := bufio.NewScanner(strings.NewReader(string(byteValue)))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, "#") { //skip comments
+			continue
+		}
+		strBuilder.WriteString(line)
+	}
+	err = json.Unmarshal([]byte(strBuilder.String()), &options)
 	if err != nil {
 		log.Fatal("error parsing the configuration file ", err)
 	}
-
 	return &options
 }

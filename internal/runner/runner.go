@@ -17,21 +17,26 @@ type Runner struct {
 }
 
 // New creates a new runner
-func New(cmdOptions *ScanOptions) (*Runner, error) {
-	args := []string{}
+func New(cmdOptions *ScanOptions) *Runner {
 
 	runner := &Runner{
 		options: cmdOptions,
 		// create cmdlog instance pasing command and args
-		cl: cmdlog.New(cmdOptions.Command, args),
+		cl: cmdlog.New(cmdOptions.Command, cmdOptions.Args),
 	}
-	if cmdOptions.ReverseGrepRegex[0] != "" {
-		runner.cl.SetReverseGrepRegex(cmdOptions.ReverseGrepRegex[0])
+	if len(runner.options.ReverseGrepRegex) > 1 {
+		for _, v := range runner.options.ReverseGrepRegex {
+			runner.cl.SetReverseGrepRegex(v)
+		}
+
 	}
-	if cmdOptions.GrepRegex[0] != "" {
-		runner.cl.SetGrepRegex(cmdOptions.GrepRegex[0])
+	if len(runner.options.GrepRegex) > 1 {
+		for _, v := range runner.options.GrepRegex {
+			runner.cl.SetReverseGrepRegex(v)
+		}
+
 	}
-	return runner, nil
+	return runner
 }
 
 // Execute Periodically run command

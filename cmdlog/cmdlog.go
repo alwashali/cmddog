@@ -61,15 +61,18 @@ func (e *Cmdlog) reverseGrep(output string) string {
 	str = append(str, output)
 	// iterate str and each time string is cleaned using regex put it in a new place inside the slice
 	for i, filter := range e.reverseGrepRegex {
-		re := regexp.MustCompile(filter)
-		outstr := re.ReplaceAllString(str[i], "")
-		scanner := bufio.NewScanner(strings.NewReader(outstr))
 		strBuilder := strings.Builder{}
+		re := regexp.MustCompile(filter)
+		scanner := bufio.NewScanner(strings.NewReader(str[i]))
 		for scanner.Scan() {
 			if scanner.Text() != "" {
-				strBuilder.WriteString(scanner.Text() + "\n")
+				outstr := re.ReplaceAllLiteralString(scanner.Text(), "")
+				if outstr != "" {
+					strBuilder.WriteString(scanner.Text() + "\n")
+				}
 			}
 		}
+
 		str = append(str, strBuilder.String())
 
 	}
@@ -115,10 +118,22 @@ func (e *Cmdlog) SetGrepRegex(match string) {
 func (e *Cmdlog) Run(sleepTime time.Duration) {
 
 	for {
-		cmd := exec.Command(e.command, e.args...)
+		// exec.Command() can't be reused
+		// new instance is created in each iteration
+		cmd := &exec.Cmd{}
+
+		if len(e.args) > 0 {
+			if e.args[0] != "" {
+				cmd = exec.Command(e.command, e.args...) // when config is used
+			} else {
+				cmd = exec.Command(e.command)
+			}
+		} else {
+			cmd = exec.Command(e.command) // when no args are supplied using cmd
+		}
 
 		// run the command and output
-		output, err := cmd.Output()
+		output, err := cmd.CombinedOutput()
 		if err != nil {
 			log.Fatalf("Output failed with %s\n", err)
 		}
