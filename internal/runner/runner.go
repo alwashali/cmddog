@@ -56,7 +56,7 @@ func (r *Runner) Execute() {
 				size = r.cl.ResultsSize()
 				if size > i {
 					for _, value := range r.cl.Results(i) {
-						fmt.Println(value)
+						log.Println(value)
 					}
 					i = size
 				}
@@ -95,7 +95,10 @@ func (r *Runner) Execute() {
 
 				if size > i {
 					for _, line := range r.cl.Results(i) {
-						if _, err := f.WriteString(line + "\n"); err != nil {
+
+						t := time.Now().Format("2001-01-01 15:04:05")
+						str := fmt.Sprintf("%s %s \n", t, line)
+						if _, err := f.WriteString(str); err != nil {
 							log.Println(err)
 						}
 					}
