@@ -1,3 +1,3 @@
-module github.com/alwashali/cmddog/
+module github.com/alwashali/cmddog
 
 go 1.15

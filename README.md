@@ -9,3 +9,8 @@
 - Repeated values are ignored if already saved
 - Support regular expression filters
 - Accepts time interval to wait between execution
+
+
+### To DO
+
+- Add web hooks when grep matches
