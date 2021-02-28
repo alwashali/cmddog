@@ -1,7 +1,7 @@
 package main
 
 import (
-	runner "github.com/alwashali/cmdlog/internal/runner"
+	runner "github.com/alwashali/cmddog/internal/runner"
 )
 
 func main() {

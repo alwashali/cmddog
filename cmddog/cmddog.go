@@ -1,4 +1,4 @@
-package commandwatch
+package cmddog
 
 import (
 	"bufio"
@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-// Cmdlog options
-type Cmdlog struct {
+// Cmddog options
+type Cmddog struct {
 	command          string
 	args             []string
 	results          []string
@@ -20,15 +20,15 @@ type Cmdlog struct {
 }
 
 // New creates new object
-func New(cmd string, args []string) *Cmdlog {
-	return &Cmdlog{
+func New(cmd string, args []string) *Cmddog {
+	return &Cmddog{
 		command: cmd,
 		args:    args,
 	}
 }
 
 // Insert to unique output values
-func (e *Cmdlog) insertNew(output string) {
+func (e *Cmddog) insertNew(output string) {
 
 	for _, line := range strings.Split(strings.TrimSuffix(output, "\n"), "\n") {
 		found := false
@@ -53,7 +53,7 @@ func (e *Cmdlog) insertNew(output string) {
 }
 
 // Filter output using regex
-func (e *Cmdlog) reverseGrep(output string) string {
+func (e *Cmddog) reverseGrep(output string) string {
 	// loop through all filters and clean the string matching the regex filter
 
 	var str []string
@@ -81,7 +81,7 @@ func (e *Cmdlog) reverseGrep(output string) string {
 
 }
 
-func (e *Cmdlog) grep(output string) string {
+func (e *Cmddog) grep(output string) string {
 	// loop through all filters and clean the string matching the regex filter
 
 	var str []string
@@ -105,17 +105,17 @@ func (e *Cmdlog) grep(output string) string {
 
 // SetReverseGrepRegex for cleaning the output before store
 // Use with caution -> your regex should match only unwanted text in the output
-func (e *Cmdlog) SetReverseGrepRegex(filter string) {
+func (e *Cmddog) SetReverseGrepRegex(filter string) {
 	e.reverseGrepRegex = append(e.reverseGrepRegex, filter)
 }
 
 // SetGrepRegex set regex pattern
-func (e *Cmdlog) SetGrepRegex(match string) {
+func (e *Cmddog) SetGrepRegex(match string) {
 	e.grepRegex = append(e.grepRegex, match)
 }
 
 // Run continuesly execute the command and write the new output values to output buffer
-func (e *Cmdlog) Run(sleepTime time.Duration) {
+func (e *Cmddog) Run(sleepTime time.Duration) {
 
 	for {
 		// exec.Command() can't be reused
@@ -156,7 +156,7 @@ func (e *Cmdlog) Run(sleepTime time.Duration) {
 }
 
 // Results returns the results slice from the specified index, pass 0 for returning entire slice
-func (e *Cmdlog) Results(i int) []string {
+func (e *Cmddog) Results(i int) []string {
 	if i >= 0 && len(e.results) > 0 && i < len(e.results) {
 		return e.results[i:]
 	}
@@ -164,6 +164,6 @@ func (e *Cmdlog) Results(i int) []string {
 }
 
 // ResultsSize returns number of elements in results slice
-func (e *Cmdlog) ResultsSize() int {
+func (e *Cmddog) ResultsSize() int {
 	return len(e.results)
 }

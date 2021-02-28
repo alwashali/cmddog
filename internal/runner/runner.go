@@ -7,13 +7,13 @@ import (
 	"sync"
 	"time"
 
-	cmdlog "github.com/alwashali/cmdlog/cmdlog"
+	"github.com/alwashali/cmddog/cmddog"
 )
 
 // Runner is a client for running the enumeration process.
 type Runner struct {
 	options *ScanOptions
-	cl      *cmdlog.Cmdlog
+	cl      *cmddog.Cmddog
 }
 
 // New creates a new runner
@@ -22,7 +22,7 @@ func New(cmdOptions *ScanOptions) *Runner {
 	runner := &Runner{
 		options: cmdOptions,
 		// create cmdlog instance pasing command and args
-		cl: cmdlog.New(cmdOptions.Command, cmdOptions.Args),
+		cl: cmddog.New(cmdOptions.Command, cmdOptions.Args),
 	}
 	if len(runner.options.ReverseGrepRegex) > 1 {
 		for _, v := range runner.options.ReverseGrepRegex {
