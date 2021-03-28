@@ -1,25 +1,24 @@
 package runner
 
 import (
-	"bufio"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
 	"time"
+
+	"gopkg.in/yaml.v2"
 )
 
 // ScanOptions struct for cmd tool options
 type ScanOptions struct {
-	Command          string   `json:"command"`
-	Args             []string `json:"args"`
-	ReverseGrepRegex []string `json:"reversegrep"`
-	GrepRegex        []string `json:"grep"`
+	Command          string   `yaml:"command"`
+	Args             []string `yaml:"args"`
+	ReverseGrepRegex []string `yaml:"reversegrep"`
+	GrepRegex        []string `yaml:"grep"`
 	ConfigFile       string
-	OutputFile       string `json:"output"`
+	OutputFile       string `yaml:"output"`
 	Silent           bool
 	Interval         time.Duration
 }
@@ -65,25 +64,17 @@ func ParseOptions() *ScanOptions {
 }
 
 func parseConfig(options ScanOptions, filename string) *ScanOptions {
-	jsonFile, err := os.Open(filename)
+	configFile, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer jsonFile.Close()
+	defer configFile.Close()
 
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-
-	strBuilder := strings.Builder{}
-
-	scanner := bufio.NewScanner(strings.NewReader(string(byteValue)))
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.Contains(line, "#") { //skip comments
-			continue
-		}
-		strBuilder.WriteString(line)
+	byteValue, err := ioutil.ReadAll(configFile)
+	if err != nil {
+		log.Fatal("error parsing the configuration file ", err)
 	}
-	err = json.Unmarshal([]byte(strBuilder.String()), &options)
+	err = yaml.Unmarshal(byteValue, &options)
 	if err != nil {
 		log.Fatal("error parsing the configuration file ", err)
 	}

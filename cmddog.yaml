@@ -1,0 +1,27 @@
+#cmddog Configuration 
+
+# command name without arguments, add arguments to args 
+command: ls
+
+# command arguments
+args: [ "-l"]
+  
+
+# Output file name
+output: cmddog.log
+
+
+#grep and reversegrep accepts regular expressions for cleaning the output 
+
+# grep works exactly similar to grep command 
+# example grep: ["High","Medium"] wil grep only lines containing High or Medium words. Similarly for the reversegrep
+
+grep: [""]
+
+
+# reversegrep works exactly opposite to grep command. It is used to ignore everything in the output except anything matches reveregrep patterns
+
+reversegrep: [""]
+ 
+
+
